@@ -79,10 +79,10 @@ public class SimpleChannelPool<C extends Channel, K extends ChannelPoolKey> impl
         this.segmentFactory = checkNotNull(segmentFactory, "segmentFactory");
         this.bootstrap = checkNotNull(bootstrap, "bootstrap").clone();
         this.bootstrap.handler(new ChannelInitializer<C>() {
-            @SuppressWarnings("unchecked")
             @Override
             protected void initChannel(C ch) throws Exception {
                 assert ch.eventLoop().inEventLoop();
+                @SuppressWarnings("unchecked")
                 K key = (K) ch.attr(KEY).get();
                 assert key != null;
                 handler.channelCreated(ch, key);
@@ -169,15 +169,13 @@ public class SimpleChannelPool<C extends Channel, K extends ChannelPoolKey> impl
         }
     }
 
-    private void newChannel(
-            final K key, final Promise<C> promise) {
+    private void newChannel(final K key, final Promise<C> promise) {
         Bootstrap bs = bootstrap.clone(loop(key));
         ChannelFuture f = bs.attr(KEY, key).connect(key.remoteAddress());
         if (f.isDone()) {
             notifyConnect(f, key, promise);
         } else {
             f.addListener(new ChannelFutureListener() {
-                @SuppressWarnings("unchecked")
                 @Override
                 public void operationComplete(ChannelFuture future) throws Exception {
                     notifyConnect(future, key, promise);
@@ -186,9 +184,9 @@ public class SimpleChannelPool<C extends Channel, K extends ChannelPoolKey> impl
         }
     }
 
-    @SuppressWarnings("unchecked")
     private void notifyConnect(ChannelFuture future, ChannelPoolKey key, Promise<C> promise) {
         if (future.isSuccess()) {
+            @SuppressWarnings("unchecked")
             C ch = (C) future.channel();
             ch.attr(KEY).set(key);
             promise.setSuccess(ch);
@@ -202,12 +200,12 @@ public class SimpleChannelPool<C extends Channel, K extends ChannelPoolKey> impl
         return release(channel, channel.eventLoop().<Boolean>newPromise());
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public Future<Boolean> release(final C channel, final Promise<Boolean> promise) {
         checkNotNull(channel, "channel");
         checkNotNull(promise, "promise");
         try {
+            @SuppressWarnings("unchecked")
             final K key = (K) channel.attr(KEY).getAndSet(null);
             if (key != null) {
                 ChannelPoolSegment<C> channels = pool.get(key);
